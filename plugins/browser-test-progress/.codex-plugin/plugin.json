@@ -1,0 +1,38 @@
+{
+  "name": "browser-test-progress",
+  "version": "0.1.0+codex.20260716171519",
+  "description": "Display discrete ChatGPT built-in browser acceptance subtasks in a persistent MCP Apps progress panel.",
+  "author": {
+    "name": "Datuoba",
+    "url": "https://github.com/Datuoba"
+  },
+  "homepage": "https://github.com/Datuoba/browser-test-progress",
+  "repository": "https://github.com/Datuoba/browser-test-progress",
+  "license": "MIT",
+  "keywords": [
+    "browser-testing",
+    "acceptance-testing",
+    "progress",
+    "mcp-apps"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "\u6d4f\u89c8\u5668\u9a8c\u6536\u8fdb\u5ea6",
+    "shortDescription": "\u5728\u60ac\u6d6e\u7a97\u53e3\u4e2d\u663e\u793a\u6d4f\u89c8\u5668\u9a8c\u6536\u5b50\u4efb\u52a1\u8282\u70b9",
+    "longDescription": "\u4e3a ChatGPT \u5185\u7f6e\u6d4f\u89c8\u5668\u9a8c\u6536\u4efb\u52a1\u521b\u5efa\u79bb\u6563\u8fdb\u5ea6\u8282\u70b9\uff0c\u4e0d\u663e\u793a\u865a\u6784\u767e\u5206\u6bd4\uff0c\u5e76\u5355\u72ec\u8ddf\u8e2a\u62a5\u544a\u751f\u6210\u4e0e\u7ed3\u679c\u56de\u4f20\u786e\u8ba4\u3002",
+    "developerName": "Datuoba",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/Datuoba/browser-test-progress",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "\u4e3a\u8fd9\u6b21\u5185\u7f6e\u6d4f\u89c8\u5668\u9a8c\u6536\u663e\u793a\u5b50\u4efb\u52a1\u8fdb\u5ea6",
+      "\u6253\u5f00\u5f53\u524d\u6d4f\u89c8\u5668\u9a8c\u6536\u4efb\u52a1\u7684\u8fdb\u5ea6\u7a97\u53e3"
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/logo.svg"
+  }
+}

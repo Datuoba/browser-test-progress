@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>浏览器验收进度</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family:
+          var(--font-sans),
+          Inter,
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        --panel: var(--color-background-primary, #ffffff);
+        --panel-soft: var(--color-background-secondary, #f6f7f8);
+        --text: var(--color-text-primary, #171717);
+        --muted: var(--color-text-secondary, #70757d);
+        --line: var(--color-border-secondary, #dcdfe3);
+        --accent: #2563eb;
+        --success: var(--color-text-success, #16833b);
+        --danger: var(--color-text-danger, #c0362c);
+        --warning: var(--color-text-warning, #9a6500);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-width: 280px;
+        margin: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      body {
+        padding: 0;
+      }
+
+      main {
+        width: 100%;
+        overflow: visible;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        overflow: hidden;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .task-id {
+        margin-top: 5px;
+        overflow: hidden;
+        color: var(--muted);
+        font-family: var(--font-mono), ui-monospace, monospace;
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        min-height: 26px;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 5px 9px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .status-badge[data-status="running"] {
+        color: var(--accent);
+      }
+
+      .status-badge[data-status="completed"] {
+        color: var(--success);
+      }
+
+      .status-badge[data-status="failed"],
+      .status-badge[data-status="interrupted"] {
+        color: var(--danger);
+      }
+
+      .status-badge[data-status="unconfirmed"] {
+        color: var(--warning);
+      }
+
+      .summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .summary strong {
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .nodes {
+        max-height: min(58vh, 560px);
+        margin: 0;
+        overflow-y: auto;
+        padding: 12px 14px 14px;
+        list-style: none;
+        scrollbar-width: thin;
+      }
+
+      .node {
+        position: relative;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 9px;
+        min-height: 52px;
+        padding: 5px 2px 8px;
+      }
+
+      .node:not(:last-child)::after {
+        position: absolute;
+        top: 34px;
+        bottom: -2px;
+        left: 16px;
+        width: 1px;
+        background: var(--line);
+        content: "";
+      }
+
+      .node-icon {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .node[data-status="running"] .node-icon {
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+        color: var(--accent);
+      }
+
+      .node[data-status="running"] .node-icon::after {
+        position: absolute;
+        inset: -4px;
+        border: 2px solid transparent;
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        content: "";
+        animation: spin 1s linear infinite;
+      }
+
+      .node[data-status="passed"] .node-icon {
+        border-color: color-mix(in srgb, var(--success) 45%, var(--line));
+        background: color-mix(in srgb, var(--success) 10%, var(--panel));
+        color: var(--success);
+      }
+
+      .node[data-status="failed"] .node-icon,
+      .node[data-status="interrupted"] .node-icon {
+        border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+        background: color-mix(in srgb, var(--danger) 10%, var(--panel));
+        color: var(--danger);
+      }
+
+      .node[data-status="unconfirmed"] .node-icon {
+        border-color: color-mix(in srgb, var(--warning) 45%, var(--line));
+        background: color-mix(in srgb, var(--warning) 10%, var(--panel));
+        color: var(--warning);
+      }
+
+      .node-body {
+        min-width: 0;
+        padding-top: 3px;
+      }
+
+      .node-title {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1.35;
+      }
+
+      .node[data-status="pending"] .node-title {
+        color: var(--muted);
+        font-weight: 550;
+      }
+
+      .node-message {
+        margin-top: 3px;
+        overflow-wrap: anywhere;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding: 10px 12px;
+      }
+
+      .sync-state {
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      button {
+        min-height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 5px 9px;
+        background: var(--panel);
+        color: var(--text);
+        font: inherit;
+        font-size: 11px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--panel-soft);
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .empty {
+        padding: 28px 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      .error {
+        display: none;
+        margin: 0 12px 10px;
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: color-mix(in srgb, var(--danger) 10%, var(--panel));
+        color: var(--danger);
+        font-size: 11px;
+      }
+
+      .error[data-visible="true"] {
+        display: block;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .node[data-status="running"] .node-icon::after {
+          animation: none;
+          border-color: var(--accent);
+          opacity: 0.35;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --panel: var(--color-background-primary, #202123);
+          --panel-soft: var(--color-background-secondary, #292b2f);
+          --text: var(--color-text-primary, #f4f4f5);
+          --muted: var(--color-text-secondary, #a6a9ae);
+          --line: var(--color-border-secondary, #414348);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main aria-live="polite">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Browser acceptance</p>
+          <h1 id="title">浏览器验收进度</h1>
+          <div class="task-id" id="task-id">等待任务数据</div>
+        </div>
+        <div class="status-badge" id="status-badge" data-status="running">
+          等待中
+        </div>
+      </header>
+
+      <section class="summary">
+        <span id="current-node">尚未开始</span>
+        <strong id="node-count">0 个节点</strong>
+      </section>
+
+      <div class="empty" id="empty-state">
+        正在连接浏览器验收任务…
+      </div>
+      <ol class="nodes" id="nodes" hidden></ol>
+      <div class="error" id="error" role="status"></div>
+
+      <footer class="footer">
+        <span class="sync-state" id="sync-state">正在初始化…</span>
+        <button id="refresh-button" type="button">刷新</button>
+        <button id="pip-button" type="button">悬浮显示</button>
+      </footer>
+    </main>
+
+    <script type="module">
+      const elements = {
+        title: document.querySelector("#title"),
+        taskId: document.querySelector("#task-id"),
+        statusBadge: document.querySelector("#status-badge"),
+        currentNode: document.querySelector("#current-node"),
+        nodeCount: document.querySelector("#node-count"),
+        nodes: document.querySelector("#nodes"),
+        empty: document.querySelector("#empty-state"),
+        error: document.querySelector("#error"),
+        syncState: document.querySelector("#sync-state"),
+        refreshButton: document.querySelector("#refresh-button"),
+        pipButton: document.querySelector("#pip-button"),
+      };
+
+      const statusLabels = {
+        running: "执行中",
+        completed: "已完成",
+        failed: "未通过",
+        unconfirmed: "有未确认项",
+        interrupted: "已中断",
+        pending: "等待执行",
+        passed: "通过",
+      };
+
+      const nodeIcons = {
+        pending: "·",
+        running: "●",
+        passed: "✓",
+        failed: "!",
+        unconfirmed: "?",
+        interrupted: "×",
+      };
+
+      let progress = null;
+      let rpcId = 0;
+      let bridgeReady = null;
+      let refreshInFlight = false;
+      const pendingRequests = new Map();
+
+      const showError = (message) => {
+        elements.error.textContent = message || "";
+        elements.error.dataset.visible = message ? "true" : "false";
+      };
+
+      const formatSyncTime = () =>
+        new Intl.DateTimeFormat("zh-CN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }).format(new Date());
+
+      const render = () => {
+        if (!progress) {
+          elements.empty.hidden = false;
+          elements.nodes.hidden = true;
+          return;
+        }
+
+        elements.empty.hidden = true;
+        elements.nodes.hidden = false;
+        elements.title.textContent = progress.title || "浏览器验收进度";
+        elements.taskId.textContent = progress.taskId;
+        elements.taskId.title = progress.taskId;
+        elements.statusBadge.dataset.status = progress.status;
+        elements.statusBadge.textContent =
+          statusLabels[progress.status] || progress.status;
+
+        const summary = progress.summary || {};
+        elements.currentNode.textContent = summary.currentNodeTitle
+          ? "当前：" + summary.currentNodeTitle
+          : progress.status === "running"
+            ? "等待下一节点"
+            : "任务已结束";
+        elements.nodeCount.textContent =
+          String(summary.completed || 0) +
+          " / " +
+          String(summary.total || progress.nodes.length) +
+          " 节点";
+
+        elements.nodes.replaceChildren();
+        for (const node of progress.nodes || []) {
+          const item = document.createElement("li");
+          item.className = "node";
+          item.dataset.status = node.status;
+          if (node.status === "running") {
+            item.setAttribute("aria-current", "step");
+          }
+
+          const icon = document.createElement("span");
+          icon.className = "node-icon";
+          icon.textContent = nodeIcons[node.status] || "·";
+          icon.setAttribute(
+            "aria-label",
+            statusLabels[node.status] || node.status
+          );
+
+          const body = document.createElement("div");
+          body.className = "node-body";
+
+          const title = document.createElement("div");
+          title.className = "node-title";
+          title.textContent = node.title;
+          body.appendChild(title);
+
+          if (node.message) {
+            const message = document.createElement("div");
+            message.className = "node-message";
+            message.textContent = node.message;
+            body.appendChild(message);
+          }
+
+          item.appendChild(icon);
+          item.appendChild(body);
+          elements.nodes.appendChild(item);
+        }
+
+        const activeNode = elements.nodes.querySelector(
+          '[data-status="running"]'
+        );
+        if (activeNode) {
+          activeNode.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      };
+
+      const updateFromToolResult = (result) => {
+        const nextProgress = result?.structuredContent?.progress;
+        if (!nextProgress) return;
+
+        if (progress?.taskId === nextProgress.taskId) {
+          const currentRevision = Number.isInteger(progress.revision)
+            ? progress.revision
+            : null;
+          const nextRevision = Number.isInteger(nextProgress.revision)
+            ? nextProgress.revision
+            : null;
+          const currentUpdatedAt = Date.parse(progress.updatedAt || "");
+          const nextUpdatedAt = Date.parse(nextProgress.updatedAt || "");
+          const hasRevisionOrder =
+            currentRevision !== null && nextRevision !== null;
+          const hasTimestampOrder =
+            Number.isFinite(currentUpdatedAt) && Number.isFinite(nextUpdatedAt);
+
+          if (
+            (hasRevisionOrder && nextRevision < currentRevision) ||
+            (!hasRevisionOrder &&
+              hasTimestampOrder &&
+              nextUpdatedAt < currentUpdatedAt)
+          ) {
+            return;
+          }
+        }
+
+        progress = nextProgress;
+        elements.syncState.textContent = "已同步 " + formatSyncTime();
+        showError("");
+        render();
+      };
+
+      const rpcNotify = (method, params) => {
+        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+      };
+
+      const rpcRequest = (method, params) =>
+        new Promise((resolve, reject) => {
+          const id = ++rpcId;
+          pendingRequests.set(id, { resolve, reject });
+          window.parent.postMessage(
+            { jsonrpc: "2.0", id, method, params },
+            "*"
+          );
+        });
+
+      window.addEventListener(
+        "message",
+        (event) => {
+          if (event.source !== window.parent) return;
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+
+          if (message.id !== undefined) {
+            const pending = pendingRequests.get(message.id);
+            if (!pending) return;
+            pendingRequests.delete(message.id);
+            if (message.error) {
+              pending.reject(message.error);
+            } else {
+              pending.resolve(message.result);
+            }
+            return;
+          }
+
+          if (message.method === "ui/notifications/tool-result") {
+            updateFromToolResult(message.params);
+          }
+        },
+        { passive: true }
+      );
+
+      const initializeBridge = async () => {
+        const result = await rpcRequest("ui/initialize", {
+          appInfo: {
+            name: "browser-test-progress-widget",
+            version: "0.1.0",
+          },
+          appCapabilities: {
+            availableDisplayModes: ["inline", "pip"],
+          },
+          protocolVersion: "2026-01-26",
+        });
+        rpcNotify("ui/notifications/initialized", {});
+        return result;
+      };
+
+      const callTool = async (name, args) => {
+        if (window.openai?.callTool) {
+          return window.openai.callTool(name, args);
+        }
+        await bridgeReady;
+        return rpcRequest("tools/call", {
+          name,
+          arguments: args,
+        });
+      };
+
+      const refresh = async () => {
+        if (refreshInFlight) return;
+        refreshInFlight = true;
+        try {
+          const result = await callTool("get_browser_test_progress", {
+            taskId: progress?.taskId,
+          });
+          updateFromToolResult(result);
+        } catch (error) {
+          const message =
+            typeof error?.message === "string"
+              ? error.message
+              : "进度同步暂时不可用";
+          showError(message);
+          elements.syncState.textContent = "同步失败";
+        } finally {
+          refreshInFlight = false;
+        }
+      };
+
+      const requestPip = async () => {
+        try {
+          let result;
+          if (window.openai?.requestDisplayMode) {
+            result = await window.openai.requestDisplayMode({ mode: "pip" });
+          } else {
+            await bridgeReady;
+            result = await rpcRequest("ui/request-display-mode", {
+              mode: "pip",
+            });
+          }
+          elements.pipButton.textContent =
+            result?.mode === "pip" ? "已悬浮" : "悬浮显示";
+        } catch (error) {
+          showError("当前 ChatGPT 宿主未允许 PiP，窗口将保持内嵌显示。");
+        }
+      };
+
+      elements.refreshButton.addEventListener("click", refresh);
+      elements.pipButton.addEventListener("click", requestPip);
+
+      if (window.openai?.toolOutput?.progress) {
+        progress = window.openai.toolOutput.progress;
+        render();
+      }
+
+      bridgeReady = initializeBridge()
+        .then(async () => {
+          await refresh();
+          await requestPip();
+        })
+        .catch((error) => {
+          showError("无法连接 ChatGPT 组件桥接。");
+          elements.syncState.textContent = "初始化失败";
+          console.error(error);
+        });
+
+      window.setInterval(refresh, 1200);
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "browser-test-progress",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP Apps progress panel for ChatGPT built-in browser acceptance tasks.",
+  "homepage": "https://github.com/Datuoba/browser-test-progress",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Datuoba/browser-test-progress.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Datuoba/browser-test-progress/issues"
+  },
+  "scripts": {
+    "build": "esbuild server.mjs --bundle --platform=node --format=esm --target=node22 --outfile=dist/server.mjs",
+    "start": "node dist/server.mjs",
+    "check": "npm run build && node --check server.mjs && node --check dist/server.mjs && node tests/state.test.mjs && node tests/mcp-smoke.test.mjs && node tests/mcp-smoke.test.mjs dist/server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.0.1",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

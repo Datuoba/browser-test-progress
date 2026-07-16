@@ -1,0 +1,20 @@
+{
+  "name": "datuoba",
+  "interface": {
+    "displayName": "Datuoba Plugins"
+  },
+  "plugins": [
+    {
+      "name": "browser-test-progress",
+      "source": {
+        "source": "local",
+        "path": "./plugins/browser-test-progress"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
